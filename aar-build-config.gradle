@@ -1,0 +1,40 @@
+// AAR build configuration for Unity integration
+android {
+    // ... existing configuration ...
+    
+    // Custom task to copy AAR to Unity-ready location
+    afterEvaluate {
+        task copyAARToUnity(type: Copy) {
+            description = 'Copy the generated AAR to Unity plugins folder structure'
+            dependsOn assembleRelease
+            
+            from "$buildDir/outputs/aar/app-release.aar"
+            into "$rootDir/unity-integration/"
+            rename { fileName ->
+                "RobotVisionUnityPlugin.aar"
+            }
+            
+            doLast {
+                println "AAR copied to: $rootDir/unity-integration/RobotVisionUnityPlugin.aar"
+                println "Copy this file to your Unity project's Assets/Plugins/Android/ folder"
+            }
+        }
+        
+        task generateUnityIntegrationPackage(type: Zip) {
+            description = 'Generate complete Unity integration package'
+            dependsOn copyAARToUnity
+            
+            from "$rootDir/unity-integration/"
+            from "$rootDir/README.md"
+            from "$rootDir/unity-scripts/" // We'll create this folder
+            
+            archiveBaseName = "UnityVisionPlugin"
+            archiveVersion = android.defaultConfig.versionName
+            destinationDirectory = file("$rootDir/dist/")
+            
+            doLast {
+                println "Unity integration package created: $rootDir/dist/UnityVisionPlugin-${android.defaultConfig.versionName}.zip"
+            }
+        }
+    }
+}
