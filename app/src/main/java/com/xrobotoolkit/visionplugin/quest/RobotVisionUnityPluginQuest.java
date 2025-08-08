@@ -2,8 +2,8 @@ package com.xrobotoolkit.visionplugin.quest;
 
 import android.util.Log;
 
-public class VisionUnityPluginQuest {
-    private static final String TAG = "VisionUnityPluginQuest";
+public class RobotVisionUnityPluginQuest {
+    private static final String TAG = "RobotVisionUnityPluginQuest";
 
     public interface OnInitializedListener {
         void onInitialized(int textureId);

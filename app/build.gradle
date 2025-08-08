@@ -1,14 +1,14 @@
 plugins {
-    alias(libs.plugins.android.library)
+    id 'com.android.library'
 }
 
 android {
     namespace 'com.xrobotoolkit.visionplugin.quest'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         minSdk 30
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -17,6 +17,21 @@ android {
         // Enable OpenGL ES support
         ndk {
             abiFilters 'arm64-v8a', 'armeabi-v7a'
+        }
+        
+        // Configure CMake
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++14"
+                arguments "-DANDROID_TOOLCHAIN=clang"
+            }
+        }
+    }
+    
+    // Configure native build
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
         }
     }
 
@@ -43,47 +58,34 @@ android {
     // Custom tasks for Unity integration
     afterEvaluate {
         task copyAARToUnity(type: Copy) {
-            description = 'Copy the generated AAR to Unity plugins folder structure'
+            description = 'Copy the generated AAR to Unity integration folder'
             dependsOn assembleRelease
             
             from "$buildDir/outputs/aar/app-release.aar"
             into "$rootDir/unity-integration/"
             rename { fileName ->
-                "RobotVisionUnityPlugin.aar"
+                "RobotVisionUnityPluginQuest.aar"
             }
             
             doLast {
-                println "AAR copied to: $rootDir/unity-integration/RobotVisionUnityPlugin.aar"
+                println "AAR copied to: $rootDir/unity-integration/RobotVisionUnityPluginQuest.aar"
                 println "Copy this file to your Unity project's Assets/Plugins/Android/ folder"
             }
         }
         
-        task generateUnityIntegrationPackage(type: Zip) {
-            description = 'Generate complete Unity integration package'
-            dependsOn copyAARToUnity
-            
-            from "$rootDir/unity-integration/"
-            from "$rootDir/README.md"
-            
-            archiveBaseName = "UnityVisionPlugin"
-            archiveVersion = android.defaultConfig.versionName
-            destinationDirectory = file("$rootDir/dist/")
-            
-            doLast {
-                println "Unity integration package created: $rootDir/dist/UnityVisionPlugin-${android.defaultConfig.versionName}.zip"
-            }
-        }
+        // Auto-copy AAR after build
+        assembleRelease.finalizedBy(copyAARToUnity)
     }
 }
 
 dependencies {
-    implementation libs.appcompat
-    implementation libs.material
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.10.0'
     
     // OpenGL ES is available by default in Android SDK
     // No additional dependencies needed for OpenGL ES
     
-    testImplementation libs.junit
-    androidTestImplementation libs.ext.junit
-    androidTestImplementation libs.espresso.core
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }

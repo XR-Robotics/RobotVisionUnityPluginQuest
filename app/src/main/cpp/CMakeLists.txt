@@ -2,8 +2,10 @@
 # documentation: https://d.android.com/studio/projects/add-native-code.html
 
 # Sets the minimum version of CMake required to build the native library.
+cmake_minimum_required(VERSION 3.18.1)
 
-cmake_minimum_required(VERSION 3.4.1)
+# Declare the project
+project("NativeUnityRenderingCallback")
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -27,12 +29,18 @@ add_library( # Sets the name of the library.
 # completing its build.
 
 find_library( # Sets the name of the path variable.
-              dl
-              GLESv2
+              log-lib
 
               # Specifies the name of the NDK library that
               # you want CMake to locate.
               log )
+
+find_library( # Sets the name of the path variable.
+              glesv2-lib
+
+              # Specifies the name of the NDK library that
+              # you want CMake to locate.
+              GLESv2 )
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
@@ -40,8 +48,8 @@ find_library( # Sets the name of the path variable.
 
 target_link_libraries( # Specifies the target library.
                         NativeUnityRenderingCallback
-                        log
 
                         # Links the target library to the log library
                         # included in the NDK.
-                        ${log-lib} )
+                        ${log-lib}
+                        ${glesv2-lib} )
