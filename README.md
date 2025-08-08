@@ -54,7 +54,7 @@ RobotVisionUnityPluginQuest/
 
 1. **Clone/Download the project**
    ```bash
-   git clone [repository-url]
+   git clone https://github.com/XR-Robotics/RobotVisionUnityPluginQuest.git
    cd RobotVisionUnityPluginQuest
    ```
 
@@ -67,7 +67,7 @@ RobotVisionUnityPluginQuest/
    ./build.sh
    ```
 
-3**Generated Files**
+3. **Generated Files**
    After successful build, you'll find:
    - **AAR File**: `unity-integration/RobotVisionUnityPluginQuest.aar`
 
