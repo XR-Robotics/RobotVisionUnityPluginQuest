@@ -64,7 +64,9 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved)
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_nnhhaadd_nativetextureplugin_RenderingCallbackManager_nativeInit(JNIEnv *env, jobject obj)
+Java_com_xrobotoolkit_visionplugin_quest_RenderingCallbackManager_nativeInit(JNIEnv *env, jobject obj)
 {
+    LOGD("RenderingCallbackManager nativeInit called");
     gCallbackObject = env->NewGlobalRef(obj);
+    LOGD("Global callback object reference created");
 }

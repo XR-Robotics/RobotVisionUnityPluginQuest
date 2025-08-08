@@ -155,20 +155,7 @@ public class RobotVisionUnityPluginQuest : MonoBehaviour
 
     void Update()
     {
-        // Update texture if plugin is initialized
         // The native plugin handles automatic frame updates via SurfaceTexture callbacks
-        if (nativeTexPtrSet && robotVisionPlugin != null)
-        {
-            try
-            {
-                robotVisionPlugin.CallStatic("UpdateTexture");
-            }
-            catch (System.Exception e)
-            {
-                if (enableDebugLogs)
-                    Debug.LogError($"[RobotVisionPlugin] Error updating texture: {e.Message}");
-            }
-        }
     }
 
     void OnDestroy()
