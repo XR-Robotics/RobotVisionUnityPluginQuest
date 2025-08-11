@@ -165,15 +165,15 @@ public class RobotVisionUnityPluginQuest : MonoBehaviour
 
     void OnApplicationPause(bool pauseStatus)
     {
-        if (pauseStatus)
-        {
-            CleanupPlugin();
-        }
-        else
-        {
-            // Reinitialize when app resumes
-            Start();
-        }
+        // if (pauseStatus)
+        // {
+        //     CleanupPlugin();
+        // }
+        // else
+        // {
+        //     // Reinitialize when app resumes
+        //     Start();
+        // }
     }
 
     private void CleanupPlugin()
