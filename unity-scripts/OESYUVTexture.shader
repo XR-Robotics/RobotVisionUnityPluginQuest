@@ -72,10 +72,6 @@ Shader "NativeOpenGLRender/OESYUVTexture"
                 rgb.g = saturate(y - 0.344 * u - 0.714 * v);
                 rgb.b = saturate(y + 1.772 * u);
                 
-                // Apply sRGB gamma correction
-                // Convert from linear space to sRGB space
-                rgb = pow(rgb, 1.0/2.2);
-                
                 return fixed4(rgb, col.a);
             }
             ENDCG
