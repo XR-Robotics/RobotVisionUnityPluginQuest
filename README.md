@@ -142,10 +142,15 @@ The plugin includes test classes for standalone testing without Unity:
 - Verify network connectivity for video streaming
 - Check Unity console for plugin initialization errors
 
-## License
+## Citation
 
-[Add your license information here]
+If you find this project useful, please consider citing it as follows.
 
-## Support
-
-[Add support/contact information here]
+```
+@article{zhao2025xrobotoolkit,
+      title={XRoboToolkit: A Cross-Platform Framework for Robot Teleoperation}, 
+      author={Zhigen Zhao and Liuchuan Yu and Ke Jing and Ning Yang}, 
+      journal={arXiv preprint arXiv:2508.00097},
+      year={2025}
+}
+```
