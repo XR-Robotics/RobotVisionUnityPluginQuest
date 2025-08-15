@@ -226,16 +226,6 @@ public class MediaDecoder {
             format.setInteger(MediaFormat.KEY_PRIORITY, 0); // Real-time priority
             format.setInteger(MediaFormat.KEY_LOW_LATENCY, 1); // Enable low latency mode
 
-            // Attempt to configure for sRGB color space if supported
-            try {
-                format.setInteger(MediaFormat.KEY_COLOR_STANDARD, MediaFormat.COLOR_STANDARD_BT709);
-                format.setInteger(MediaFormat.KEY_COLOR_RANGE, MediaFormat.COLOR_RANGE_FULL);
-                format.setInteger(MediaFormat.KEY_COLOR_TRANSFER, MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
-                Log.i(TAG, "MediaFormat configured for sRGB color space (with surface)");
-            } catch (Exception colorEx) {
-                Log.w(TAG, "Could not configure sRGB color space in MediaFormat, will handle in shader");
-            }
-
             mediaCodec = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_VIDEO_AVC);
             if (mediaCodec == null) {
                 throw new Exception("Failed to create MediaCodec decoder");
