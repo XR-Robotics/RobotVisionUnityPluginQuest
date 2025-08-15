@@ -25,23 +25,87 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * MediaDecoder - Hardware-Accelerated Video Decoder with Network Integration
+ * 
+ * This class provides a comprehensive video decoding solution that combines:
+ * - Hardware-accelerated H.264 video decoding using Android MediaCodec
+ * - Real-time network streaming via TCP with length-prefixed protocol
+ * - Direct Surface rendering for optimal performance
+ * - Low-latency configuration for real-time applications
+ * - Optional video recording and frame export capabilities
+ * 
+ * Architecture Overview:
+ * - Uses MediaCodec for hardware H.264 decoding
+ * - Integrates with FBOPlugin for Unity texture rendering (optional)
+ * - Supports both FBO-based and direct Surface rendering modes
+ * - TCP server handles length-prefixed video stream protocol
+ * - Multi-threaded design for optimal performance
+ * 
+ * Key Features:
+ * - Low-latency mode for real-time applications
+ * - Automatic color space handling (sRGB support)
+ * - Robust error handling and recovery
+ * - Frame timing and presentation timestamp management
+ * - Optional PNG frame export for debugging
+ * - Video stream recording capabilities
+ * - Thread-safe operations with proper cleanup
+ * 
+ * Usage Patterns:
+ * 1. Standalone Mode: initialize() + startServer() for FBO-based rendering
+ * 2. Integrated Mode: initializeWithSurface() + startServer() for direct
+ * Surface rendering
+ * 
+ * Threading Model:
+ * - TCP server runs on background thread for network I/O
+ * - MediaCodec operates on internal decoder threads
+ * - Frame callbacks synchronized with Unity render thread
+ * 
+ * @author XR-Robotics
+ * @version 1.0
+ */
 public class MediaDecoder {
     private final String TAG = "MediaDecoder";
-    private MediaCodec mediaCodec;
-    private String mimeType = "video/avc"; // H. 264 format
-    private int previewTextureId;
-    private FBOPlugin mFBOPlugin = null;
-    private Thread tcpThread;
-    private boolean receivie = false;
-    private int width;
-    private int height;
 
-    private long lastTimestamp = 0;
+    // Core MediaCodec components
+    private MediaCodec mediaCodec; // Hardware decoder instance
+    private String mimeType = "video/avc"; // H.264/AVC MIME type
 
+    // Unity integration components (for standalone mode)
+    private int previewTextureId; // Unity texture ID
+    private FBOPlugin mFBOPlugin = null; // FBO-based rendering pipeline
+
+    // Network streaming components
+    private Thread tcpThread; // Background thread for TCP server
+    private volatile boolean receivie = false; // Thread-safe flag for server state
+
+    // Video configuration
+    private int width; // Video frame width
+    private int height; // Video frame height
+
+    // Frame timing management
+    private long lastTimestamp = 0; // Last frame presentation timestamp
+
+    /**
+     * Initializes the MediaDecoder with FBO-based rendering pipeline.
+     * This mode uses FBOPlugin to copy decoded frames to Unity textures.
+     * 
+     * Features:
+     * - Hardware-accelerated H.264 decoding
+     * - Low-latency mode for real-time applications
+     * - sRGB color space configuration
+     * - FBO-based texture copying to Unity
+     * - Automatic error handling and cleanup
+     * 
+     * @param unityTextureId Unity texture ID to render decoded frames
+     * @param width          Video frame width in pixels
+     * @param height         Video frame height in pixels
+     * @throws Exception if initialization fails
+     */
     public void initialize(int unityTextureId, int width, int height) throws Exception {
         Log.i(TAG, "initialize: textureId=" + unityTextureId + ", size=" + width + "x" + height);
 
-        // Clean up any existing resources first
+        // Clean up any existing resources first to prevent resource leaks
         if (mediaCodec != null) {
             Log.i(TAG, "Cleaning up existing MediaCodec before reinitializing");
             release();
@@ -53,28 +117,30 @@ public class MediaDecoder {
             }
         }
 
+        // Store configuration parameters
         this.width = width;
         this.height = height;
         this.previewTextureId = unityTextureId;
 
-        // Initialize FBOPlugin
+        // Initialize FBOPlugin for Unity texture rendering
         if (mFBOPlugin == null) {
             mFBOPlugin = new FBOPlugin();
         }
         mFBOPlugin.init();
         mFBOPlugin.BuildTexture(unityTextureId, width, height);
 
-        // Create and configure MediaCodec with proper error handling
+        // Create and configure MediaCodec with comprehensive error handling
         try {
+            // Create video format for H.264/AVC with specified dimensions
             MediaFormat format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height);
             format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                     MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
 
-            // Enable low latency mode
+            // Configure low-latency mode for real-time applications
             format.setInteger(MediaFormat.KEY_PRIORITY, 0); // Real-time priority
             format.setInteger(MediaFormat.KEY_LOW_LATENCY, 1); // Enable low latency mode
 
-            // Attempt to configure for sRGB color space if supported
+            // Attempt to configure sRGB color space if supported by device
             try {
                 format.setInteger(MediaFormat.KEY_COLOR_STANDARD, MediaFormat.COLOR_STANDARD_BT709);
                 format.setInteger(MediaFormat.KEY_COLOR_RANGE, MediaFormat.COLOR_RANGE_FULL);
@@ -84,11 +150,13 @@ public class MediaDecoder {
                 Log.w(TAG, "Could not configure sRGB color space in MediaFormat, will handle in shader");
             }
 
+            // Create decoder instance
             mediaCodec = MediaCodec.createDecoderByType(MediaFormat.MIMETYPE_VIDEO_AVC);
             if (mediaCodec == null) {
                 throw new Exception("Failed to create MediaCodec decoder");
             }
 
+            // Configure decoder with FBO surface and start
             mediaCodec.configure(format, mFBOPlugin.getSurface(), null, 0);
             mediaCodec.start();
 
@@ -113,6 +181,23 @@ public class MediaDecoder {
         Log.i(TAG, "MediaDecoder initialized successfully with low latency mode enabled");
     }
 
+    /**
+     * Initializes the MediaDecoder with direct Surface rendering.
+     * This mode renders decoded frames directly to the provided surface,
+     * bypassing FBO operations for optimal performance.
+     * 
+     * Features:
+     * - Direct Surface rendering (no texture copying)
+     * - Hardware-accelerated H.264 decoding
+     * - Low-latency mode configuration
+     * - sRGB color space support
+     * - Optimal performance for integrated rendering
+     * 
+     * @param surface External surface to render decoded frames
+     * @param width   Video frame width in pixels
+     * @param height  Video frame height in pixels
+     * @throws Exception if initialization fails
+     */
     public void initializeWithSurface(Surface surface, int width, int height) throws Exception {
         Log.i(TAG, "initializeWithSurface: surface=" + surface + ", size=" + width + "x" + height);
 
@@ -181,17 +266,35 @@ public class MediaDecoder {
         Log.i(TAG, "MediaDecoder initialized successfully with external surface");
     }
 
+    // Data buffer for network operations (reusable to reduce GC pressure)
     private byte[] buffer;
 
+    /**
+     * Starts the TCP server to receive H.264 video stream data.
+     * Creates a background thread to handle client connections and data reception.
+     * Implements length-prefixed protocol for reliable message framing.
+     * 
+     * Protocol Format:
+     * - 4-byte big-endian length header
+     * - Variable-length H.264 NAL unit data
+     * - Continuous stream of encoded frames
+     * 
+     * @param port   TCP port to listen on for incoming connections
+     * @param record Whether to record received data to file for debugging
+     * @throws IOException if server socket creation fails
+     */
     public void startServer(int port, boolean record) throws IOException {
-        // Stop existing TCP server if running
+        // Stop existing TCP server if running to prevent conflicts
         stopServer();
 
         receivie = true;
-        Log.i(TAG, "startTCPServer:" + port);
+        Log.i(TAG, "Starting TCP server on port: " + port);
+
+        // Initialize reusable buffer to reduce memory allocations
         if (buffer == null) {
-            buffer = new byte[1024 * 1024]; // Adjust the buffer size according to the actual situation
+            buffer = new byte[1024 * 1024]; // 1MB buffer for video data
         }
+
         tcpThread = new Thread(new Runnable() {
             @Override
             public void run() {
